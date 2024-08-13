@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlackJuice</title>
+   <link rel="stylesheet" href="/popup.css">
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="header">   
+            <img src="/images/xe-128.png" alt="">
+            <h1>BlackJuice v1.5 <span id="no-of-selected-items"></span> </h1>
+        </div>
+        <div class="file-list" id="fileList">       
+            <div class="no-media">
+                <p>
+                    No media available for processing in this tab. 
+                    <br>
+                    Please click play on the video to assist in detecting files...
+                </p>
+                    
+            </div>
+        </div>
+        <div class="bottom-bar">
+            <div class="left">
+                <button class="bottom-btn toggle-disable" id="delete-selected-files" disabled>
+                    <img src="/images/delete.png" alt="">
+                    <span class="badge none" id="download-batch"></span>
+                </button>
+                <button class="bottom-btn toggle-disable" id="download-selected-files" disabled>
+                    <img src="/images/download-black.png" alt="">
+                    <span class="badge none" id="download-batch"></span>
+                </button>
+
+            </div>
+            <div class="right">
+                <button class="bottom-btn"  id="toggle-window-size">
+                    <img src="/images/maximize.png" alt="">
+                </button>
+                <button class="bottom-btn"  id="clear_list" disabled>
+                    <img src="/images/sweep.png" alt="">
+                </button>
+                <button class="bottom-btn">
+                    <img src="/images/settings.png" alt="">
+                </button>
+            </div>
+
+        </div>
+        
+    </div>
+
+
+    <script src="popup.js"></script>
+    
+    
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+    "version" : "1.5",
+    "description": "BlackJuice Downloader",
+    "manifest_version": 3,
+    "icons": {
+        "16": "/images/xe-16.png",
+        "48": "/images/xe-48.png",
+        "128": "/images/xe-128.png"
+    },
+    "action" : {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "/images/xe-16.png",
+            "48": "/images/xe-48.png",
+            "128": "/images/xe-128.png"
+        }
+    },
+        
+    "background" : {
+        "service_worker": "background.js"
+    },
+    "name": "BlackJuice Downloader",
+    "permissions" :[
+        "activeTab",
+        "contextMenus",
+        "scripting",
+        "webRequest",
+        "storage",
+        "downloads"
+       
+        
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ]
+    
+    
+}
