@@ -3,6 +3,8 @@ class SimpleMediaInterceptor {
 
     constructor() {
         this.isDownloaderActive = false;
+        this.m3u8Regex = /\.m3u8(\?.*|#.*)?$/i;
+        this.interceptedUrls = new Set()
         this.allMediaFiles = [];
         this.mediaTypes = ['audio', 'video'];
         this.mediaExtensions = ['.mp3', '.mp4', '.avi', '.mov', '.webm', '.ogg'];
@@ -229,8 +231,6 @@ class SimpleMediaInterceptor {
 
             const filesize = response.headers.get('Content-Length')
 
-
-
             
             let extension = filename.split('.').pop()
 
@@ -238,10 +238,7 @@ class SimpleMediaInterceptor {
 
             if(extension === ''){
               extension = 'XE'
-            }
-
-
-            
+            }            
 
             const fileSizeWithUnits = this.returnFileSizeWithUnits(filesize)
 
@@ -252,8 +249,6 @@ class SimpleMediaInterceptor {
             this.updateStoredFiles(existingFiles)
 
             
-
-
         }
         catch(error){
             console.log(error)
@@ -268,27 +263,31 @@ class SimpleMediaInterceptor {
     }
 
     
-  
-    interceptRequest(details) {
-        // Check if the URL ends with a media extension
+    async interceptRequest(details) {
+        // Check if the URL ends with a media extension   
+      
 
-
-        if(details.type === 'media'){
-
-            if (this.mediaExtensions.some(ext => details.url.toLowerCase().endsWith(ext))) {
-
-                this.storeFileData(details)
+        if(details.method === "GET" && this.m3u8Regex.test(details.url) && !this.interceptedUrls.has(details.url)){
             
-            }
+          this.interceptedUrls.add(details.url);  
+
+          const m3u8Content = await this.fetchM3U8File(details.url);
+
+          const segmented_urls = this.parseM3U8Content(m3u8Content, details.url);
+
+          this.displayTotalStreamSize(segmented_urls, details.url)        
+          
+            
+        }if(details.type === 'media' && this.mediaExtensions.some(ext => details.url.toLowerCase().endsWith(ext))){
+              
+          this.storeFileData(details)
+
         }
-        
+     
     }
 
-
-  
     checkResponse(details) {
-  
-        // Check Content-Type header for media types
+          // Check Content-Type header for media types
         const contentTypeHeader = details.responseHeaders.find(
             header => header.name.toLowerCase() === 'content-type'
         );
@@ -297,6 +296,76 @@ class SimpleMediaInterceptor {
             this.storeFileData(details)
         }
     }
+
+
+
+    async  fetchSegmentSize(segmentUrl) {
+      const response = await fetch(segmentUrl, { method: 'HEAD' });
+      const contentLength = response.headers.get('Content-Length');
+      return contentLength ? parseInt(contentLength, 10) : 0;
+    }
+  
+  
+    async  fetchM3U8File(m3u8Url) {
+        const response = await fetch(m3u8Url);
+        const m3u8Content = await response.text();
+        return m3u8Content;
+      }
+    
+    parseM3U8Content(m3u8Content, baseUrl) {
+    const lines = m3u8Content.split('\n');
+    const segmentUrls = [];
+    
+    for (const line of lines) {
+        if (line && !line.startsWith('#')) {
+        const fullUrl = new URL(line.trim(), baseUrl).href;
+            if (!this.m3u8Regex.test(fullUrl)){
+                segmentUrls.push(fullUrl);
+            }   
+        }
+    }
+    
+    return segmentUrls;
+    }
+
+    async  displayTotalStreamSize(segmentUrls, m3u8link) {   
+  
+      try {
+  
+        const sizes = await Promise.all(segmentUrls.map(url => this.fetchSegmentSize(url)));
+        const totalSize = sizes.reduce((acc, size) => acc + size, 0);
+
+
+        if(totalSize > 0.00){
+
+          const object_url = new URL(m3u8link)
+
+          const pathname = object_url.pathname
+          let undecoded_filename = pathname.split('/').pop()
+
+          let filename = decodeURIComponent(undecoded_filename)
+
+          const extension = filename.split('.').pop()
+
+         
+
+          let existingFiles = await this.getStoredFiles()
+          
+          const fileSizeWithUnits = this.returnFileSizeWithUnits(totalSize)
+
+          const data_to_store = {link: m3u8link, name: filename, size: fileSizeWithUnits, type: extension}  
+          
+          existingFiles.push(data_to_store)
+
+          this.updateStoredFiles(existingFiles)
+        }
+
+      } catch (error) {
+        console.log('Error fetching segment sizes:', error);
+      }
+    }
+
+    
     
   }
   
