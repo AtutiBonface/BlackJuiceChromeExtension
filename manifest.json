@@ -8,7 +8,7 @@
         "128": "/images/xe-128.png"
     },
     "action" : {
-        "default_popup": "popup.html",
+        "default_popup": "/popup/popup.html",
         "default_icon": {
             "16": "/images/xe-16.png",
             "48": "/images/xe-48.png",
@@ -17,7 +17,8 @@
     },
         
     "background" : {
-        "service_worker": "background.js"
+        "service_worker": "main.js",
+        "type": "module"
     },
     "name": "BlackJuice Downloader",
     "permissions" :[
@@ -27,7 +28,9 @@
         "webRequest",
         "storage",
         "downloads",
-        "tabs"
+        "tabs",
+        "cookies"
+        
        
         
     ],

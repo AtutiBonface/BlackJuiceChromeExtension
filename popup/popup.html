@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlackJuice</title>
-   <link rel="stylesheet" href="/popup.css">
+   <link rel="stylesheet" href="/popup/popup.css">
 </head>
 <body>
     <div class="container" id="container">
@@ -24,11 +24,11 @@
         </div>
         <div class="bottom-bar">
             <div class="left">
-                <button class="bottom-btn toggle-disable" id="delete-selected-files" disabled>
+                <button class="bottom-btn delete toggle-disable" id="delete-selected-files" disabled>
                     <img src="/images/delete.png" alt="">
                     <span class="badge none" id="download-batch"></span>
                 </button>
-                <button class="bottom-btn toggle-disable" id="download-selected-files" disabled>
+                <button class="bottom-btn download toggle-disable" id="download-selected-files" disabled>
                     <img src="/images/download-black.png" alt="">
                     <span class="badge none" id="download-batch"></span>
                 </button>
@@ -38,7 +38,7 @@
                 <button class="bottom-btn"  id="toggle-window-size">
                     <img src="/images/maximize.png" alt="">
                 </button>
-                <button class="bottom-btn"  id="clear_list" disabled>
+                <button class="bottom-btn delete"  id="clear_list" disabled>
                     <img src="/images/sweep.png" alt="">
                 </button>
                 <button class="bottom-btn">
@@ -51,7 +51,7 @@
     </div>
 
 
-    <script src="popup.js"></script>
+    <script src="/popup/popup.js"></script>
     
     
 </body>

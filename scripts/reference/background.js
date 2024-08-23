@@ -1,9 +1,12 @@
-class SimpleMediaInterceptor {    
-    
 
+import BlackjuiceM3U8Parser from '../blackjuice-m8u3.js';
+
+
+class BlackjuiceMediaInterceptor {    
     constructor() {
         this.isDownloaderActive = false;
         this.m3u8Regex = /\.m3u8(\?.*|#.*)?$/i;
+        this.videoThumbnailMap = {};
         this.interceptedUrls = new Set()
         this.allMediaFiles = [];
         this.mediaTypes = ['audio', 'video'];
@@ -20,7 +23,8 @@ class SimpleMediaInterceptor {
           let f_name = new URL(downloadItem.url)
           let path_name = f_name.pathname.split('/').pop()
           let new_filename = decodeURIComponent(path_name)
-          this.sendDataToDownloader({link : url, name : new_filename})
+          this.sendDataToDownloader({count : 1,edit: false, files: [{link : url, name : new_filename}]})
+          
         }
 
         chrome.downloads.cancel(downloadItem.id);
@@ -37,6 +41,7 @@ class SimpleMediaInterceptor {
             this.setBadgedefaultText()
             this.startIntersepting() 
             this.takeOverBrowserDownloads() 
+            
         }
     }
     async setBadgedefaultText(){
@@ -62,7 +67,7 @@ class SimpleMediaInterceptor {
           let f_name = new URL(data.srcUrl)
           let path_name = f_name.pathname.split('/').pop()
           let new_filename = decodeURIComponent(path_name)
-          this.sendDataToDownloader({link : data.srcUrl, name : new_filename})
+          this.sendDataToDownloader({count : 1,edit: true, files: [{link : data.srcUrl, name : new_filename}]})
         }
     
       })
@@ -109,6 +114,7 @@ class SimpleMediaInterceptor {
   
   
       new_socket.onopen = (event)=>{
+        console.log("App is open")
         this.isDownloaderActive = true;
 
         chrome.storage.local.set({isxengineOpened : true})
@@ -128,9 +134,7 @@ class SimpleMediaInterceptor {
 
     async deleteFileFromStorage(fileids){
 
-      let stored_files = await this.getStoredFiles()
-
-     
+      let stored_files = await this.getStoredFiles()     
 
       stored_files = stored_files.filter((file)=> !fileids.includes(file.link))
 
@@ -141,9 +145,7 @@ class SimpleMediaInterceptor {
   
     returnFileSizeWithUnits(filesize){
   
-      let size = Number(filesize);
-
-     
+      let size = Number(filesize);    
     
       if (isNaN(size)) {
         return '---';
@@ -169,14 +171,8 @@ class SimpleMediaInterceptor {
                 this.interceptRequest.bind(this),
                 { urls: ["<all_urls>"] },
                 ["requestBody"]
-            );
-    
-            // Listen for responses
-            chrome.webRequest.onHeadersReceived.addListener(
-                this.checkResponse.bind(this),
-                { urls: ["<all_urls>"] },
-                ["responseHeaders"]
-            );
+            );    
+           
         }
     }
 
@@ -190,18 +186,150 @@ class SimpleMediaInterceptor {
         });
     }
 
-    async returnFineFilename(filename, extension){
-      if (filename != extension){
+    async  fetchDefaultFavicon(url) {
+      try {
+        const faviconPath = new URL('/favicon.ico', url).href;
+        const response = await fetch(faviconPath);
+        if (response.ok) {
+          return faviconPath;
+        }
+      } catch (error) {
+        console.log('Error fetching default favicon:', error);
+      }
+      return null;
+    }
+
+    async returnFineFilename(extension){
+
         return new Promise((resolve)=>{
-          chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
             const activeTab = tabs[0]
-            resolve(`${activeTab.title}.${extension}`)
+
+            if (activeTab?.url.startsWith('chrome://')) {
+              console.log("Cannot execute script on chrome:// URLs");
+              resolve();
+              return;
+            }
+
+            const [tab] = await chrome.scripting.executeScript({
+              target : {tabId: activeTab?.id},
+              func:()=>{
+                let title = document.querySelector("meta[property='og:title']")?.content || document.querySelector("title")?.innerHTML || "untitled"
+
+                title = title.replace(/[|%/:*?"<>]/g, '')
+
+                return title
+              }
+            })
+            resolve(`${tab?.result}${extension}`)
           })
         })
-      }  
-      return filename
+    
       
     }
+
+    async getSiteFavicon(){
+      return new Promise((resolve)=>{
+        chrome.tabs.query({active: true, currentWindow: true}, async (tabs)=>{
+          const activeTab = tabs[0]
+
+          if (activeTab?.url.startsWith('chrome://')) {
+            console.log("Cannot execute script on chrome:// URLs");
+            resolve();
+            return;
+          }
+
+          const [tab] = await chrome.scripting.executeScript({
+            target: {tabId: activeTab?.id},
+            func:()=>{
+              
+              let icons = Array.from(document.querySelectorAll("link[rel='icon'], link[rel='shortcut icon']"))
+              let faviconUrl = null;
+
+              for(const icon of icons)
+                if(icon.href){
+                  
+                  faviconUrl = new URL(icon.href, window.location.href).href
+                  break;
+                }
+
+              return faviconUrl
+            }
+          })
+
+          let faviconUrl = tab?.result;
+
+          
+          if (!faviconUrl && activeTab?.url) {
+            faviconUrl = await this.fetchDefaultFavicon(activeTab.url);
+          }
+
+          resolve(faviconUrl)
+        })
+      })
+    }
+    async getThumbnailUrl(){
+
+      return new Promise((resolve)=>{
+        chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+          const activeTab = tabs[0]
+
+          if (activeTab?.url.startsWith('chrome://')) {
+            console.log("Cannot execute script on chrome:// URLs");
+            resolve();
+            return;
+          }
+
+          const [tab] = await chrome.scripting.executeScript({
+
+            target : {tabId: activeTab?.id},
+            func:()=>{
+                  const selectors = [
+                    "meta[property='og:image:secure_url']",
+                    "meta[property='og:image']",
+                    "link[rel='image_src']",
+                    "meta[property='twitter:image']",
+                    "video[poster]"
+                ];
+
+                for (const sel of selectors) {
+                    const el = document.querySelector(sel);
+                    if (el) {
+                      let url = el.getAttribute("content") || el.getAttribute("href") || el.getAttribute("poster");
+
+                      if (url) {                        
+                        return new URL(url, window.location.href).href;
+                      }
+                    }
+                }
+            return '/images/no-thumbnail.png';
+            }
+          })
+          resolve(tab?.result)
+        })
+      })
+  
+    
+  }
+
+  getMediaCookies(url) {
+    return new Promise((resolve, reject) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            const activeTab = tabs[0];
+
+            if (!activeTab || activeTab.url.startsWith('chrome://')) {
+                console.log("Cannot execute script on chrome:// URLs");
+                return resolve(null);
+            }
+
+            chrome.cookies.getAll({ url: url }, (cookies) => {
+                resolve(cookies);
+            });
+        });
+    });
+}
+
+
 
     async storeFileData(details){
       
@@ -214,11 +342,18 @@ class SimpleMediaInterceptor {
 
         let filename = decodeURIComponent(undecoded_filename)
 
-        const extension = filename.split('.').pop()
+        let extension = filename.split('.').pop()
 
+        extension = extension.trim() === "" ? "" : `.${extension}`;
 
-        filename = await this.returnFineFilename(filename, extension)
+        filename = await this.returnFineFilename(extension)
 
+        let thumbnail = await this.getThumbnailUrl()
+
+        let favicon = await this.getSiteFavicon()
+        
+        let cookies = await this.getMediaCookies(link)
+        
         
         const existingFiles = await this.getStoredFiles();
 
@@ -242,7 +377,7 @@ class SimpleMediaInterceptor {
 
             const fileSizeWithUnits = this.returnFileSizeWithUnits(filesize)
 
-            const data_to_store = {link: details.url, name: filename, size: fileSizeWithUnits, type: extension}  
+            const data_to_store = {link: details.url, name: filename, size: fileSizeWithUnits, type: extension, favicon:favicon, thumbnail:thumbnail, cookies:cookies}  
             
             existingFiles.push(data_to_store)
 
@@ -262,20 +397,25 @@ class SimpleMediaInterceptor {
 
     }
 
+    async loungeM3u8Parser(url) {
+      const parser = new BlackjuiceM3U8Parser();
+      const m3u8Content = await parser.fetchM3U8File(url)
+      const result = await parser.parse(m3u8Content, url);
+      
+      return result
+    }
+
     
     async interceptRequest(details) {
-        // Check if the URL ends with a media extension   
-      
-
+        
         if(details.method === "GET" && this.m3u8Regex.test(details.url) && !this.interceptedUrls.has(details.url)){
             
           this.interceptedUrls.add(details.url);  
 
-          const m3u8Content = await this.fetchM3U8File(details.url);
+          const m3u8results = await this.loungeM3u8Parser(details.url);
 
-          const segmented_urls = this.parseM3U8Content(m3u8Content, details.url);
-
-          this.displayTotalStreamSize(segmented_urls, details.url)        
+          console.log(m3u8results)
+          //this.displayTotalStreamSize(segmented_urls, details.url)        
           
             
         }if(details.type === 'media' && this.mediaExtensions.some(ext => details.url.toLowerCase().endsWith(ext))){
@@ -284,71 +424,19 @@ class SimpleMediaInterceptor {
 
         }
      
-    }
-
-    checkResponse(details) {
-          // Check Content-Type header for media types
-        const contentTypeHeader = details.responseHeaders.find(
-            header => header.name.toLowerCase() === 'content-type'
-        );
-  
-        if (contentTypeHeader && this.mediaTypes.some(type => contentTypeHeader.value.includes(type))) {
-            this.storeFileData(details)
-        }
-    }
-
-
-
-    async  fetchSegmentSize(segmentUrl) {
-      const response = await fetch(segmentUrl, { method: 'HEAD' });
-      const contentLength = response.headers.get('Content-Length');
-      return contentLength ? parseInt(contentLength, 10) : 0;
-    }
-  
-  
-    async  fetchM3U8File(m3u8Url) {
-        const response = await fetch(m3u8Url);
-        const m3u8Content = await response.text();
-        return m3u8Content;
-      }
-    
-    parseM3U8Content(m3u8Content, baseUrl) {
-    const lines = m3u8Content.split('\n');
-    const segmentUrls = [];
-    
-    for (const line of lines) {
-        if (line && !line.startsWith('#')) {
-        const fullUrl = new URL(line.trim(), baseUrl).href;
-            if (!this.m3u8Regex.test(fullUrl)){
-                segmentUrls.push(fullUrl);
-            }   
-        }
-    }
-    
-    return segmentUrls;
-    }
-
-    async  displayTotalStreamSize(segmentUrls, m3u8link) {   
-  
-      try {
-  
+    } 
+    async  displayTotalStreamSize(segmentUrls, m3u8link) {     
+      try {  
         const sizes = await Promise.all(segmentUrls.map(url => this.fetchSegmentSize(url)));
         const totalSize = sizes.reduce((acc, size) => acc + size, 0);
-
-
         if(totalSize > 0.00){
 
           const object_url = new URL(m3u8link)
 
           const pathname = object_url.pathname
-          let undecoded_filename = pathname.split('/').pop()
-
+          let undecoded_filename = pathname?.split('/').pop()
           let filename = decodeURIComponent(undecoded_filename)
-
-          const extension = filename.split('.').pop()
-
-         
-
+          const extension = filename?.split('.').pop()
           let existingFiles = await this.getStoredFiles()
           
           const fileSizeWithUnits = this.returnFileSizeWithUnits(totalSize)
@@ -363,17 +451,13 @@ class SimpleMediaInterceptor {
       } catch (error) {
         console.log('Error fetching segment sizes:', error);
       }
-    }
-
-    
-    
+    } 
   }
-  
-  
-  const interceptor = new SimpleMediaInterceptor();
+
+  const interceptor = new BlackjuiceMediaInterceptor();
   
   interceptor.checkDownloaderActive()
   
   interceptor.listenOnMessages()
   interceptor.startContextMenus()
-  
+

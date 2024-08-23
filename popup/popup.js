@@ -27,18 +27,23 @@ class BlackJuiceDownloaderPopupScript{
         this.windowBtn.addEventListener('click', () => this.toggleWindowSize());
         this.clearListBtn.addEventListener('click', () => this.clearVideoList());
         this.deleteSelectedFilesVar.addEventListener('click', ()=> this.deleteSelectedFiles())
+        this.downloadSelectedFilesVar.addEventListener('click', ()=> this.downloadSelectedFiles())
     }
 
     createFileItem(file) {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         fileItem.innerHTML = `
-            <div class="file-icon">
-                <i class="fas fa-file-video"></i>
+            <div class="file-icon" style="background-image:url('${file.thumbnail}');">
+                <div class="favicon" style="background-image:url('${file.favicon}');"></div>                           
+               
             </div>
             <div class="file-info">
                 <div class="file-name">${file.name}</div>
-                <div class="file-size">${file.size}</div>
+                <div class="more-on-file-wrapper">
+                    <div class="file-size">${file.size}</div>
+                    <img src="/images/more-down.png">
+                </div>
             </div>
             <div class="checkbox-wrapper">
                 <input type="checkbox" id="select-${file.link}" class="custom-checkbox" data-id="${file.link}">
@@ -95,17 +100,20 @@ class BlackJuiceDownloaderPopupScript{
     downloadSelectedFiles() {
 
        
-        
+        let filesToBeSent = []
+
         this.fileList.querySelectorAll('.file-item').forEach(fileItem => {
             const checkbox = fileItem.querySelector('.custom-checkbox');
             const url = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');
+            const fileName = fileItem.querySelector('.file-name').textContent;
+            const fileSize = fileItem.querySelector('.file-size').textContent;
             if (checkbox.checked) {
-               
-               
+                filesToBeSent.push({link :url, name: fileName, size:fileSize})         
             }
-        }); 
-        
-        
+        });  
+        if (filesToBeSent.length > 0 ){
+            chrome.runtime.sendMessage({action: 'initiateDownload', data: {count: filesToBeSent.length,edit:true, files: filesToBeSent}});        
+        }     
      
         
     }
@@ -180,17 +188,19 @@ class BlackJuiceDownloaderPopupScript{
         });
     }
 
+    
+
     handleIndividualDownloadClick(e) {
         if (e.target.closest('.download-btn')) {
             const fileItem = e.target.closest('.file-item');
             const fileName = fileItem.querySelector('.file-name').textContent;
-            const filelink = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');
+            const filelink = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');            
 
-            
-
-            chrome.runtime.sendMessage({action: 'initiateDownload', data: {link :filelink, name: fileName}});
+            chrome.runtime.sendMessage({action: 'initiateDownload', data: {count: 1, edit: false, files : [{link :filelink, name: fileName}]}});
         }
     }
+
+    
 
 }
 
