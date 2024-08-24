@@ -15,8 +15,8 @@ body {
 
 }
 .container{
-    width: 450px;
-    min-width: 450px; /* Sets a minimum width */
+    width: 400px;
+    min-width: 400px; /* Sets a minimum width */
     max-width: 650px; /* Sets a maximum width */
     position: relative; /* Keep it stable within its container */
     transition: width 0.2s ease-in-out;
@@ -76,6 +76,7 @@ body {
     background-color: white;
     height: 80px;
     transition: background-color 0.2s ease;
+    position: relative;
 }
 .file-item.selected{
     background-color: #f1f3f5;
@@ -150,7 +151,27 @@ body {
     color: #868e96;
    
 }
-
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #e9ecef;
+    min-width: 250px;
+    border-radius: 5px;
+    box-shadow: 2px 4px 3px rgba(0,0,0,0.2);
+    padding: 12px;
+    z-index: 1;
+}
+.dropdown-content.active {
+    display: block;
+}
+.dropdown-content.top {
+    bottom: 100%;
+    margin-bottom: -30px;
+}
+.dropdown-content.bottom {
+    top: 100%;
+    margin-top: -10px;
+}
 .checkbox-wrapper {
     margin-left: 12px;
 }

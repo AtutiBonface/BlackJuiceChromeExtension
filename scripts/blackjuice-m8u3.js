@@ -191,9 +191,9 @@ class BlackjuiceM3U8Parser {
     }
 
     getResolutionInUrl(url) {// sijai jua hii, this is fire
-      const regex = /(\d{3,4}p)/; // Regex to match patterns like 1080p, 720p, etc.
+      const regex = /(\d{3,4}p)/i; // Regex to match patterns like 1080p, 720p, etc. i helps to allow both cases eg 1080p and 1080P
       const match = url.match(regex);
-      return match ? match[0] : null; // Return the matched resolution or null if not found
+      return match ? match[0].toLowerCase() : null; // Return the matched resolution or null if not found
     }
     
   

@@ -1,6 +1,6 @@
 class BlackJuiceDownloaderPopupScript{
     constructor(){
-        this.fileList = this.fileList = document.getElementById('fileList');
+        this.fileList  = document.getElementById('fileList');
         this.noOfSelectedItems = document.getElementById('no-of-selected-items');
         this.downloadBatch = document.querySelectorAll("#download-batch");
         this.windowBtn = document.getElementById('toggle-window-size');
@@ -19,6 +19,7 @@ class BlackJuiceDownloaderPopupScript{
     initialize() {
         this.bindEvents();
         this.loadFileList();
+        this.setupDropdowns()
     }
 
     bindEvents() {
@@ -40,9 +41,15 @@ class BlackJuiceDownloaderPopupScript{
             </div>
             <div class="file-info">
                 <div class="file-name">${file.name}</div>
-                <div class="more-on-file-wrapper">
-                    <div class="file-size">${file.size}</div>
-                    <img src="/images/more-down.png">
+
+                <div>
+                    <div class="more-on-file-wrapper">
+                        <div class="file-size">${this.returnFileSizeOrResolution(file)}</div>
+                        <img src="/images/more-down.png">
+                    </div>
+                    <div class="dropdown-content" id="dropdown-${file.link}">
+                        ${this.returnDropdownData(file)}
+                    </div>
                 </div>
             </div>
             <div class="checkbox-wrapper">
@@ -60,6 +67,19 @@ class BlackJuiceDownloaderPopupScript{
         return fileItem;
     }
 
+    returnDropdownData(file){
+        return `
+        <p>720p</p>
+        <p>${file.size}</p>
+        <p>${file.name}</p>
+       
+        `
+    }
+
+    returnFileSizeOrResolution(file){
+        return file.size
+    }
+
     renderFileList(files) {
         if(files.length > 0){
             this.noOfSelectedItems.textContent = `Selected (0)`;
@@ -75,6 +95,68 @@ class BlackJuiceDownloaderPopupScript{
             this.clearListBtn.disabled = false
             
         }
+    }
+
+    setupDropdowns() {
+        const maxFileListHeight = 400; 
+    
+        this.fileList.addEventListener('click', (e) => {
+            const moreWrapper = e.target.closest('.more-on-file-wrapper');
+            if (moreWrapper) {
+                const fileItem = moreWrapper.closest('.file-item');
+                const dropdownContent = moreWrapper.nextElementSibling;
+                
+                // Close all other open dropdowns
+                this.fileList.querySelectorAll('.dropdown-content.active').forEach(dropdown => {
+                    if (dropdown !== dropdownContent) {
+                        dropdown.classList.remove('active', 'top', 'bottom');
+                    }
+                });
+    
+                
+                dropdownContent.classList.toggle('active');
+                
+                if (dropdownContent.classList.contains('active')) {
+                    const fileListRect = this.fileList.getBoundingClientRect();
+                    const fileItemRect = fileItem.getBoundingClientRect();
+                    const dropdownRect = dropdownContent.getBoundingClientRect();
+    
+                    const spaceBelow = maxFileListHeight - (fileItemRect.bottom - fileListRect.top);
+                    const currentFileListHeight = this.fileList.clientHeight;
+    
+                    if (currentFileListHeight < maxFileListHeight && 
+                        currentFileListHeight + dropdownRect.height <= maxFileListHeight) {
+                        // Expand file list and open dropdown downward
+
+                        this.fileList.style.height = `${currentFileListHeight + dropdownRect.height}px`;
+                        dropdownContent.classList.add('bottom');
+                        dropdownContent.classList.remove('top');
+                    } else if (spaceBelow >= dropdownRect.height) {
+                        // Open dropdown downward without expanding
+                        dropdownContent.classList.add('bottom');
+                        dropdownContent.classList.remove('top');
+                    } else {
+                        // Open dropdown upward
+                        dropdownContent.classList.add('top');
+                        dropdownContent.classList.remove('bottom');
+                    }
+                } else {
+                    // If closing the dropdown, reset file list height
+                    this.fileList.style.height = '';
+                }
+            }
+        });
+    
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.more-on-file-wrapper') && !e.target.closest('.dropdown-content')) {
+                this.fileList.querySelectorAll('.dropdown-content.active').forEach(dropdown => {
+                    dropdown.classList.remove('active', 'top', 'bottom');
+                });
+                // Reset file list height
+                this.fileList.style.height = '';
+            }
+        });
     }
 
     deleteSelectedFiles() {
