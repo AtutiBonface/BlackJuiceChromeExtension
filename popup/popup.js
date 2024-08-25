@@ -47,14 +47,15 @@ class BlackJuiceDownloaderPopupScript{
                         <div class="file-size">${this.returnFileSizeOrResolution(file)}</div>
                         <img src="/images/more-down.png">
                     </div>
-                    <div class="dropdown-content" id="dropdown-${file.link}">
-                        ${this.returnDropdownData(file)}
+                    <div class="dropdown-content" id="dropdown-${this.returnDropdownData(file, "link")}">
+                        <h3 class="file-name">Available Resolutions.</h3>
+                        ${this.returnDropdownData(file, "size")}
                     </div>
                 </div>
             </div>
             <div class="checkbox-wrapper">
-                <input type="checkbox" id="select-${file.link}" class="custom-checkbox" data-id="${file.link}">
-                <label for="select-${file.link}" class="select-file-btn">
+                <input type="checkbox" id="select-${this.returnDropdownData(file, "link")}" class="custom-checkbox" data-id="${this.returnDropdownData(file, "link")}">
+                <label for="select-${this.returnDropdownData(file, "link")}" class="select-file-btn">
                     <img src="/images/checked_disabled.png" alt="" class="checkbox-image">
                 </label>
             </div>
@@ -68,16 +69,36 @@ class BlackJuiceDownloaderPopupScript{
     }
 
     returnDropdownData(file){
-        return `
-        <p>720p</p>
-        <p>${file.size}</p>
-        <p>${file.name}</p>
        
+        let variantOptions = ''       
+        if(file.variants && file.variants.length > 0){
+            for(let variant in file.variants){
+
+                if(file.variants[variant].resolution){                    
+
+                    variantOptions += `<div class="variant-container"><div class="resolution-box" data-value="${file.variants[variant].resolution}" data-id="${file.variants[variant].link}"><span>MP4</span><p>${file.variants[variant].resolution}</p></div><Button title='Copy link' class="copy-link"><img src="/images/link.png"></Button></div>`            
+                }else{
+                    if(variantOptions === ''){
+                        variantOptions = `<div class="variant-container"><div class="resolution-box" data-value="${file.size}" data-id="${file.link}"><p>${file.size}</p></div><Button title='Copy link' class="copy-link"><img src="/images/link.png"></Button></div>`            
+                    }
+                }
+            }               
+
+        }else{
+            variantOptions = `<div class="variant-container"><div class="resolution-box" data-value="${file.size}" data-id="${file.link}" id="variant-${file.link}"><span>MP4</span><p>${file.size}</p></div><Button title='Copy link' class="copy-link"><img src="/images/link.png"></Button></div>`            
+        }
+        return `       
+        ${variantOptions}       
         `
     }
 
-    returnFileSizeOrResolution(file){
-        return file.size
+    returnFileSizeOrResolution(file, type){
+        if (type === "link"){
+            return file.link
+
+        }else{
+            return file.size
+        }
     }
 
     renderFileList(files) {
@@ -144,6 +165,28 @@ class BlackJuiceDownloaderPopupScript{
                     // If closing the dropdown, reset file list height
                     this.fileList.style.height = '';
                 }
+
+                dropdownContent.addEventListener('click', (e)=>{
+                    let resolution_box = e.target.closest('.resolution-box')
+
+                    if(resolution_box){
+                        let resolution = resolution_box.getAttribute('data-value')
+                        let link = resolution_box.getAttribute('data-id')
+
+                        //console.log(resolution, link)
+
+                        let file_size = fileItem.querySelector('.file-size')
+
+                        let checkbox = fileItem.querySelector('.custom-checkbox')
+
+                        checkbox.setAttribute('data-id', link)
+                        file_size.innerText = resolution
+                        
+                        dropdownContent.classList.remove('active')
+
+                        
+                    }
+                })
             }
         });
     

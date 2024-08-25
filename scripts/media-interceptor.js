@@ -7,6 +7,7 @@ class MediaInterceptor {
         this.webSocketHandler = webSocketHandler;
         this.interceptedUrls = new Set();
         this.m3u8parser = m3u8parser 
+        this.count = 0
     }
 
     startInterception() {
@@ -16,12 +17,28 @@ class MediaInterceptor {
             ["requestBody"]
         );
     }
-
+    
     async interceptRequest(details) {
         if (details.method === "GET" && this.m3u8Regex.test(details.url) && !this.interceptedUrls.has(details.url)) {
             this.interceptedUrls.add(details.url);
             const m3u8Results = await this.parseM3U8(details.url);
-            console.log(m3u8Results);
+            
+            if (m3u8Results.type === 'media'){
+              let file = m3u8Results.variants[0]
+              await this.fileManager.storeM3u8FileData(await this.extractM3u8FileData(file.uri, file.resolution, file.duration));              
+             
+            }else if(m3u8Results.type === 'master'){
+              for(let variant in m3u8Results.variants){
+                console.log(variant.resolution)
+                console.log(variant.uri)
+                console.log(variant.duration)
+              }
+                            
+            }
+
+
+
+
         } else if (details.type === 'media' && this.mediaExtensions.some(ext => details.url.toLowerCase().endsWith(ext))&& !this.interceptedUrls.has(details.url)) {
             this.interceptedUrls.add(details.url);
             await this.fileManager.storeFileData(await this.extractFileData(details));
@@ -56,6 +73,18 @@ class MediaInterceptor {
 
         return { link, name: filename, size: fileSizeWithUnits, type: extension, favicon, thumbnail, cookies };
     }
+    async extractM3u8FileData(link, resolution, duration) {
+      let size = resolution ? resolution : 'MP4' 
+      
+      const extension = this.getFileExtension(link)
+      const filename = await this.returnFineFilename(extension);
+      const thumbnail = await this.getThumbnailUrl();
+      const favicon = await this.getSiteFavicon();
+      const cookies = await this.getMediaCookies(link);
+      
+
+      return { link, name: filename, size, resolution ,type: extension, duration , favicon, thumbnail, cookies };
+  }
 
     async fetchFileSize(url) {
         try {

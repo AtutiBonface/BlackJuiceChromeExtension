@@ -7,6 +7,80 @@ class FileManager {
         });
     }
 
+    async storeM3u8FileData(fileData) {
+
+        const {resolution ,duration, link } = fileData
+        
+        
+        const existingFiles = await this.getStoredFiles();
+
+        
+
+        const fileExists = existingFiles.some(file =>
+            file.link === link || file.variants && file.variants.some(variant => variant.link === link)
+        )
+        if (fileExists) {
+            console.log('File exists')
+            return;
+        }
+        const removeLastSegment = (url) => {
+            const urlObj = new URL(url);
+            const segments = urlObj.pathname.split('/');
+            segments.pop();
+            urlObj.pathname = segments.join('/');
+            return urlObj.toString();
+        };
+    
+        const fileDataLinkWithoutLastSegment = removeLastSegment(link);
+        
+
+        const existingFileIndex = existingFiles.findIndex(file => 
+            removeLastSegment(file.link) === fileDataLinkWithoutLastSegment
+        );
+
+        if (existingFileIndex !== -1) {
+            
+            console.log("Found another m3u8 file with the same URL path");
+            
+           
+            if (!existingFiles[existingFileIndex].variants) {
+                existingFiles[existingFileIndex].variants = [];
+            }
+
+            
+            existingFiles[existingFileIndex].variants.push({
+                resolution,
+                duration,
+                link
+            });
+
+            
+            existingFiles[existingFileIndex].variants.sort((a, b) => {
+                const resA = a.resolution ? parseInt(a.resolution.replace('p', '')) : -1;
+                const resB = b.resolution ? parseInt(b.resolution.replace('p', '')) : -1;
+                return resB - resA;
+            });
+
+            // make the default link to have highest resolution
+            existingFiles[existingFileIndex].link = existingFiles[existingFileIndex].variants[0].link;
+
+            
+        } else {
+            // If it's a new file, add it to the list with the current resolution as the first variant
+            existingFiles.push({
+                ...fileData,
+                variants: [{
+                    resolution,
+                    duration,
+                    link
+                }]
+            });
+        }
+
+      
+        this.updateStoredFiles(existingFiles);
+    }
+
     async storeFileData(fileData) {
         const existingFiles = await this.getStoredFiles();
         if (existingFiles.some(file => file.link === fileData.link)) {
