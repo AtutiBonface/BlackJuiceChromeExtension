@@ -1,4 +1,4 @@
-class BlackJuiceDownloaderPopupScript{
+class VenaDownloaderPopupScript{
     constructor(){
         this.fileList  = document.getElementById('fileList');
         this.noOfSelectedItems = document.getElementById('no-of-selected-items');
@@ -17,6 +17,7 @@ class BlackJuiceDownloaderPopupScript{
         this.initialize()
     }
     initialize() {
+       
         this.bindEvents();
         this.loadFileList();
         this.setupDropdowns()
@@ -47,15 +48,15 @@ class BlackJuiceDownloaderPopupScript{
                         <div class="file-size">${this.returnFileSizeOrResolution(file)}</div>
                         <img src="/images/more-down.png">
                     </div>
-                    <div class="dropdown-content" id="dropdown-${this.returnDropdownData(file, "link")}">
-                        <h3 class="file-name">Available Resolutions.</h3>
-                        ${this.returnDropdownData(file, "size")}
+                    <div class="dropdown-content" id="dropdown-${file.link}">
+                        <h3 class="file-name">Resolutions Available.</h3>
+                        ${this.returnDropdownData(file)}
                     </div>
                 </div>
             </div>
             <div class="checkbox-wrapper">
-                <input type="checkbox" id="select-${this.returnDropdownData(file, "link")}" class="custom-checkbox" data-id="${this.returnDropdownData(file, "link")}">
-                <label for="select-${this.returnDropdownData(file, "link")}" class="select-file-btn">
+                <input type="checkbox" id="select-${file.link}" class="custom-checkbox" data-id="${file.link}">
+                <label for="select-${file.link}" class="select-file-btn">
                     <img src="/images/checked_disabled.png" alt="" class="checkbox-image">
                 </label>
             </div>
@@ -92,13 +93,8 @@ class BlackJuiceDownloaderPopupScript{
         `
     }
 
-    returnFileSizeOrResolution(file, type){
-        if (type === "link"){
-            return file.link
-
-        }else{
-            return file.size
-        }
+    returnFileSizeOrResolution(file){
+        return file.size
     }
 
     renderFileList(files) {
@@ -327,6 +323,8 @@ class BlackJuiceDownloaderPopupScript{
 
     
 
+    
+
 }
 
-const fileListManager = new BlackJuiceDownloaderPopupScript()
+const fileListManager = new VenaDownloaderPopupScript()

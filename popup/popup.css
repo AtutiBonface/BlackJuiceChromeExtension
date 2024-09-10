@@ -332,3 +332,61 @@ body {
 .bottom-bar .bottom-btn:disabled{
     cursor: not-allowed;
 }
+/* Tooltip container */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+/* Tooltip text */
+.tooltip-container .tooltip-text {
+    visibility: hidden;
+    width: 140px;
+    background-color:  #48D1CC;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 150%; /* Position above the element */
+    left: 50%;
+    margin-left: -70px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltip-container .tooltip-text.arrow-left{
+    margin-left: -15px;
+}
+.tooltip-container .tooltip-text.arrow-right{
+    margin-left: -120px;
+}
+
+
+
+/* Arrow for the tooltip */
+.tooltip-container .tooltip-text::after {
+    content: '';
+    position: absolute;
+    top: 100%; /* At the bottom of the tooltip */
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #48D1CC transparent transparent transparent;
+}
+.tooltip-container .tooltip-text.arrow-left::after{
+    left: 10%;
+
+}
+.tooltip-container .tooltip-text.arrow-right::after{
+    left: 90%;
+}
+
+/* Show the tooltip when hovering */
+.tooltip-container:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}

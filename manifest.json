@@ -1,6 +1,6 @@
 {
-    "version" : "1.5",
-    "description": "BlackJuice Downloader",
+    "version" : "2.0",
+    "description": "VenaApp ADDON",
     "manifest_version": 3,
     "icons": {
         "16": "/images/xe-16.png",
@@ -20,7 +20,7 @@
         "service_worker": "main.js",
         "type": "module"
     },
-    "name": "BlackJuice Downloader",
+    "name": "VenaAddon",
     "permissions" :[
         "activeTab",
         "contextMenus",
@@ -29,10 +29,8 @@
         "storage",
         "downloads",
         "tabs",
-        "cookies"
-        
-       
-        
+        "cookies"      
+      
     ],
     "host_permissions": [
         "<all_urls>"

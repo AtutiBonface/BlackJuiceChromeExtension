@@ -3,21 +3,109 @@ class MediaInterceptor {
     constructor(fileManager, webSocketHandler, m3u8parser) {
         this.m3u8Regex = /\.m3u8(\?.*|#.*)?$/i;
         this.mediaExtensions = ['.mp3', '.mp4', '.avi', '.mov', '.webm', '.ogg'];
+        this.mediaTypes = ['audio', 'video'];
         this.fileManager = fileManager;
         this.webSocketHandler = webSocketHandler;
         this.interceptedUrls = new Set();
         this.m3u8parser = m3u8parser 
         this.count = 0
+        this.minFileSize = 1024 * 1024;
+        this.currentTabId = null;
+        this.listenersActive = false;
     }
 
-    startInterception() {
-        chrome.webRequest.onBeforeRequest.addListener(
-            this.interceptRequest.bind(this),
-            { urls: ["<all_urls>"] },
-            ["requestBody"]
-        );
+    startInterception() {      
+      this.addListeners();     
+      
+      chrome.tabs.onActivated.addListener(this.handleTabChange.bind(this));
     }
+
+    addListeners() {
+        if (!this.listenersActive) {
+            chrome.webRequest.onBeforeRequest.addListener(
+                this.interceptRequest.bind(this),
+                { urls: ["<all_urls>"] },
+                ["requestBody"]
+            );
+
+            chrome.webRequest.onHeadersReceived.addListener(
+                this.checkResponse.bind(this),
+                { urls: ["<all_urls>"] },
+                ["responseHeaders"]
+            );
+
+            this.listenersActive = true;
+        }
+    }
+
+    removeListeners() {
+        if (this.listenersActive) {
+            chrome.webRequest.onBeforeRequest.removeListener(this.interceptRequest);
+            chrome.webRequest.onHeadersReceived.removeListener(this.checkResponse);
+            this.listenersActive = false;
+        }
+    }
+
+    async handleTabChange(activeInfo) {
+        const newTabId = activeInfo.tabId;
+        if (this.currentTabId !== newTabId) {
+            this.currentTabId = newTabId;
+            
+            // Check if the new tab is one we should be active on
+            const tab = await chrome.tabs.get(newTabId);
+            if (this.shouldInterceptOnTab(tab)) {
+                this.addListeners();
+            } else {
+                this.removeListeners();
+            }
+        }
+    }
+
+    shouldInterceptOnTab(tab) {
+        return !tab.url.startsWith('chrome://');
+    }
+
     
+    async checkResponse(details) { 
+
+      if (details.tabId !== this.currentTabId) return;
+
+      try {
+      const contentTypeHeader = details.responseHeaders.find(
+          header => header.name.toLowerCase() === 'content-type'
+          
+      );
+      const contentLengthHeader = details.responseHeaders.find(
+          header => header.name.toLowerCase() === 'content-length'
+      );
+
+      if (contentTypeHeader && this.mediaTypes.some(type => contentTypeHeader.value.includes(type))) {
+        const fileSize = contentLengthHeader ? parseInt(contentLengthHeader.value, 10) : 0;
+
+        if (fileSize >= this.minFileSize || fileSize === 0) {
+            await this.fileManager.storeFileData(await this.extractFileData(details));
+        } 
+      }
+      else if (this.m3u8Regex.test(details.url) && !this.interceptedUrls.has(details.url)) {
+        this.interceptedUrls.add(details.url);
+        const m3u8Results = await this.parseM3U8(details.url);
+        
+        if (m3u8Results.type === 'media'){
+          let file = m3u8Results.variants[0]
+          await this.fileManager.storeM3u8FileData(await this.extractM3u8FileData(file.uri, file.resolution, file.duration));              
+         
+        }else if(m3u8Results.type === 'master'){
+          for(let variant in m3u8Results.variants){
+            await this.fileManager.storeM3u8FileData(await this.extractM3u8FileData(variant.uri, variant.resolution, variant.duration));              
+          }
+                      
+      }
+
+    }}
+    catch(error){
+      console.log(error)
+    }
+  }
     async interceptRequest(details) {
         if (details.method === "GET" && this.m3u8Regex.test(details.url) && !this.interceptedUrls.has(details.url)) {
             this.interceptedUrls.add(details.url);
@@ -29,15 +117,10 @@ class MediaInterceptor {
              
             }else if(m3u8Results.type === 'master'){
               for(let variant in m3u8Results.variants){
-                console.log(variant.resolution)
-                console.log(variant.uri)
-                console.log(variant.duration)
+                await this.fileManager.storeM3u8FileData(await this.extractM3u8FileData(variant.uri, variant.resolution, variant.duration));              
               }
-                            
+                          
             }
-
-
-
 
         } else if (details.type === 'media' && this.mediaExtensions.some(ext => details.url.toLowerCase().endsWith(ext))&& !this.interceptedUrls.has(details.url)) {
             this.interceptedUrls.add(details.url);
@@ -124,7 +207,7 @@ class MediaInterceptor {
               const [tab] = await chrome.scripting.executeScript({
                 target : {tabId: activeTab?.id},
                 func:()=>{
-                  let title = document.querySelector("meta[property='og:title']")?.content || document.querySelector("title")?.innerHTML || "untitled"
+                  let title = document.querySelector("title")?.innerHTML || document.querySelector("meta[property='og:title']")?.content || "untitled"
   
                   title = title.replace(/[|%/:*?"<>]/g, '')
   

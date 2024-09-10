@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlackJuice</title>
-   <link rel="stylesheet" href="/popup/popup.css">
+    <title>VenaAddon</title>
+    <link rel="stylesheet" href="/popup/popup.css">
 </head>
 <body>
     <div class="container" id="container">
         <div class="header">   
             <img src="/images/xe-128.png" alt="">
-            <h1>BlackJuice v1.5 <span id="no-of-selected-items"></span> </h1>
+            <h1>VenaAddon<span id="no-of-selected-items"></span> </h1>
         </div>
         <div class="file-list" id="fileList">       
             <div class="no-media">
@@ -19,40 +19,48 @@
                     <br>
                     Please click play on the video to assist in detecting files...
                 </p>
-                    
             </div>
         </div>
         <div class="bottom-bar">
             <div class="left">
-                <button title="Delete Selected" class="bottom-btn delete toggle-disable" id="delete-selected-files" disabled>
-                    <img src="/images/delete.png" alt="">
-                    <span class="badge none" id="download-batch"></span>
-                </button>
-                <button title="Download Selected" class="bottom-btn download toggle-disable" id="download-selected-files" disabled>
-                    <img src="/images/download-black.png" alt="">
-                    <span class="badge none" id="download-batch"></span>
-                </button>
-
+                <div class="tooltip-container">
+                    <button class="bottom-btn delete toggle-disable" id="delete-selected-files" disabled>
+                        <img src="/images/delete.png" alt="">
+                        <span class="badge none" id="download-batch"></span>
+                    </button>
+                    <div class="tooltip-text arrow-left">Delete Selected</div>
+                </div>
+                <div class="tooltip-container">
+                    <button class="bottom-btn download toggle-disable" id="download-selected-files" disabled>
+                        <img src="/images/download-black.png" alt="">
+                        <span class="badge none" id="download-batch"></span>
+                    </button>
+                    <div class="tooltip-text">Download Selected</div>
+                </div>
             </div>
             <div class="right">
-                <button title="Expand window" class="bottom-btn"  id="toggle-window-size">
-                    <img src="/images/maximize.png" alt="">
-                </button>
-                <button title="Clear List" class="bottom-btn delete"  id="clear_list" disabled>
-                    <img src="/images/sweep.png" alt="">
-                </button>
-                <button title="Settings" class="bottom-btn">
-                    <img src="/images/settings.png" alt="">
-                </button>
+                <div class="tooltip-container">
+                    <button class="bottom-btn" id="toggle-window-size">
+                        <img src="/images/maximize.png" alt="">
+                    </button>
+                    <div class="tooltip-text ">Expand window</div>
+                </div>
+                <div class="tooltip-container">
+                    <button class="bottom-btn delete" id="clear_list" disabled>
+                        <img src="/images/sweep.png" alt="">
+                    </button>
+                    <div class="tooltip-text">Clear List</div>
+                </div>
+                <div class="tooltip-container">
+                    <button class="bottom-btn">
+                        <img src="/images/settings.png" alt="">
+                    </button>
+                    <div class="tooltip-text arrow-right">Settings</div>
+                </div>
             </div>
-
         </div>
-        
     </div>
 
-
     <script src="/popup/popup.js"></script>
-    
-    
 </body>
 </html>

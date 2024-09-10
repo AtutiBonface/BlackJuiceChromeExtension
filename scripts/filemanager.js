@@ -48,7 +48,7 @@ class FileManager {
             }
 
             
-            existingFiles[existingFileIndex].variants.push({
+            existingFiles[existingFileIndex].variants.unshift({
                 resolution,
                 duration,
                 link
@@ -67,7 +67,7 @@ class FileManager {
             
         } else {
             // If it's a new file, add it to the list with the current resolution as the first variant
-            existingFiles.push({
+            existingFiles.unshift({
                 ...fileData,
                 variants: [{
                     resolution,
@@ -87,7 +87,7 @@ class FileManager {
             return;
         }
 
-        existingFiles.push(fileData);
+        existingFiles.unshift(fileData);
         this.updateStoredFiles(existingFiles);
     }
 

@@ -29,7 +29,7 @@ class BlackjuiceApp {
             },
             (error) => {
                 this.isDownloaderActive = false;
-                this.fileManager.clearVideoList();
+                //this.fileManager.clearVideoList();
                 this.startApp();
             },
             () => this.checkDownloaderActive()
@@ -52,7 +52,11 @@ class BlackjuiceApp {
             if (message.action === "clearVideoList") {
                 this.fileManager.clearVideoList();
             } else if (message.action === "initiateDownload") {
-                this.webSocketHandler.sendData(message.data);
+                if (this.isDownloaderActive){
+                    this.webSocketHandler.sendData(message.data);
+                }else{
+                    sendResponse({active: false, status: 'failed to send'})
+                }
             } else if (message.action === "deleteIndividualFile") {
                 this.fileManager.deleteFileFromStorage(message.ids);
             }

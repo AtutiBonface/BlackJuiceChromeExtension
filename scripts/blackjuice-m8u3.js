@@ -23,6 +23,7 @@ class BlackjuiceM3U8Parser {
       this.encryptionMethod = null;
       this.encryptionKey = null;
       this.encryptionIV = null;
+      this.audioDetected = false
     }
   
     async parse(content, m3u8url) {
@@ -113,11 +114,14 @@ class BlackjuiceM3U8Parser {
   
     addUriOrSegment(uri) {
       if (this.isMasterPlaylist) {
-        if (this.currentVariant) {
+        if (this.currentVariant && !this.audioDetected) {
           this.currentVariant.uri = uri;
           this.variants.push(this.currentVariant);
           this.currentVariant = null;
+
+
         }
+        this.audioDetected = false
       } else {
         if (this.currentSegment) {
           this.currentSegment.uri = uri;
@@ -158,6 +162,11 @@ class BlackjuiceM3U8Parser {
   
     parseStreamInf(streamInfString) {
       const attrs = this.parseAttributes(streamInfString);
+
+      if (attrs.CODECS && attrs.CODECS.toLowerCase().includes('mp4a') && !attrs.CODECS.toLowerCase().includes('avc')) {
+        this.audioDetected = true;
+        return null;
+      }
       return {
         //bandwidth: parseInt(attrs.BANDWIDTH, 10),
         resolution: attrs.RESOLUTION ? this.parseResolution(attrs.RESOLUTION) : null,
@@ -179,14 +188,16 @@ class BlackjuiceM3U8Parser {
   
     async parseMasterVariants(m3u8MasterUrl) {
       for (let variant of this.variants) {
-        let resolvedVariantUri = this.resolveUri(variant.uri, m3u8MasterUrl) 
-        const mediaPlaylistContent = await this.fetchM3U8File(resolvedVariantUri);
-        const mediaParser = new BlackjuiceM3U8Parser();
-        const mediaResult = await mediaParser.parse(mediaPlaylistContent, resolvedVariantUri);
-        //variant.segments = mediaResult.variants[0].segments;
-        variant.duration = mediaResult.variants[0].duration;
-        variant.isLive = mediaResult.variants[0].isLive;
-        variant.uri  = resolvedVariantUri
+        if (!this.isAudioStream(variant.uri)) {
+          let resolvedVariantUri = this.resolveUri(variant.uri, m3u8MasterUrl) 
+          const mediaPlaylistContent = await this.fetchM3U8File(resolvedVariantUri);
+          const mediaParser = new BlackjuiceM3U8Parser();
+          const mediaResult = await mediaParser.parse(mediaPlaylistContent, resolvedVariantUri);
+          //variant.segments = mediaResult.variants[0].segments;
+          variant.duration = mediaResult.variants[0].duration;
+          variant.isLive = mediaResult.variants[0].isLive;
+          variant.uri  = resolvedVariantUri
+        }
       }
     }
 
@@ -194,6 +205,11 @@ class BlackjuiceM3U8Parser {
       const regex = /(\d{3,4}p)/i; // Regex to match patterns like 1080p, 720p, etc. i helps to allow both cases eg 1080p and 1080P
       const match = url.match(regex);
       return match ? match[0].toLowerCase() : null; // Return the matched resolution or null if not found
+    }
+
+    isAudioStream(uri) {
+      const audioExtensions = ['.mp3', '.aac', '.wav', '.ogg', '.m4a'];
+      return audioExtensions.some(ext => uri.toLowerCase().endsWith(ext));
     }
     
   

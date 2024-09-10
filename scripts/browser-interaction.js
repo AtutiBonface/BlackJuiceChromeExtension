@@ -8,7 +8,7 @@ class BrowserInteraction {
         chrome.runtime.onInstalled.addListener(() => {
             chrome.contextMenus.create({
                 id: "filesContextMenus",
-                title: "Download with Black juice",
+                title: "Download with VenaApp",
                 contexts: ["image", "audio", "video"]
             });
         });
