@@ -11,8 +11,8 @@ class VenaDownloaderPopupScript{
         this.downloadSelectedFilesVar = document.getElementById('download-selected-files')
         this.windowNormal = true;
         this.selectedFiles = [];
+        this.cookies = {};
 
-        this.noMediaHtml = 
 
         this.initialize()
     }
@@ -33,6 +33,10 @@ class VenaDownloaderPopupScript{
     }
 
     createFileItem(file) {
+        this.cookies[file.link] = file.cookies
+
+       
+        
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         fileItem.innerHTML = `
@@ -40,6 +44,7 @@ class VenaDownloaderPopupScript{
                 <div class="favicon" style="background-image:url('${file.favicon}');"></div>                           
                
             </div>
+            <div class="domain" data-domain='${file.link}'></div>
             <div class="file-info">
                 <div class="file-name">${file.name}</div>
 
@@ -83,7 +88,7 @@ class VenaDownloaderPopupScript{
                         variantOptions = `<div class="variant-container"><div class="resolution-box" data-value="${file.size}" data-id="${file.link}"><p>${file.size}</p></div><Button title='Copy link' class="copy-link"><img src="/images/link.png"></Button></div>`            
                     }
                 }
-            }               
+            }             
 
         }else{
             variantOptions = `<div class="variant-container"><div class="resolution-box" data-value="${file.size}" data-id="${file.link}" id="variant-${file.link}"><span>MP4</span><p>${file.size}</p></div><Button title='Copy link' class="copy-link"><img src="/images/link.png"></Button></div>`            
@@ -98,6 +103,7 @@ class VenaDownloaderPopupScript{
     }
 
     renderFileList(files) {
+        print(files)
         if(files.length > 0){
             this.noOfSelectedItems.textContent = `Selected (0)`;
             this.fileList.innerHTML = '';
@@ -108,7 +114,6 @@ class VenaDownloaderPopupScript{
             this.popupActionBtns.forEach((button)=>{
                 button.disabled = false
             })
-
             this.clearListBtn.disabled = false
             
         }
@@ -218,6 +223,7 @@ class VenaDownloaderPopupScript{
 
         //then delete the file with url from chrome local storage + url       
     }
+
     downloadSelectedFiles() {
 
        
@@ -228,8 +234,12 @@ class VenaDownloaderPopupScript{
             const url = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');
             const fileName = fileItem.querySelector('.file-name').textContent;
             const fileSize = fileItem.querySelector('.file-size').textContent;
+            const domain = fileItem.querySelector('.domain').getAttribute('data-domain'); 
+
+            let cookie = this.cookies[domain]
+           
             if (checkbox.checked) {
-                filesToBeSent.push({link :url, name: fileName, size:fileSize})         
+                filesToBeSent.push({link :url, name: fileName, size:fileSize, cookies: cookie})         
             }
         });  
         if (filesToBeSent.length > 0 ){
@@ -315,9 +325,12 @@ class VenaDownloaderPopupScript{
         if (e.target.closest('.download-btn')) {
             const fileItem = e.target.closest('.file-item');
             const fileName = fileItem.querySelector('.file-name').textContent;
-            const filelink = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');            
+            const filelink = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');    
+            const domain = fileItem.querySelector('.domain').getAttribute('data-domain'); 
 
-            chrome.runtime.sendMessage({action: 'initiateDownload', data: {count: 1, edit: false, files : [{link :filelink, name: fileName}]}});
+            let cookie = this.cookies[domain]        
+
+            chrome.runtime.sendMessage({action: 'initiateDownload', data: {count: 1, edit: false, files : [{link :filelink, name: fileName, cookies: cookie}]}});
         }
     }
 

@@ -164,9 +164,10 @@ class MediaInterceptor {
       const thumbnail = await this.getThumbnailUrl();
       const favicon = await this.getSiteFavicon();
       const cookies = await this.getMediaCookies(link);
+      const domain = link
       
 
-      return { link, name: filename, size, resolution ,type: extension, duration , favicon, thumbnail, cookies };
+      return { link, name: filename, size, resolution ,type: extension, duration , favicon, thumbnail, cookies, domain };
   }
 
     async fetchFileSize(url) {
@@ -304,6 +305,7 @@ class MediaInterceptor {
     
       
     }
+    
   
     getMediaCookies(url) {
       return new Promise((resolve, reject) => {
