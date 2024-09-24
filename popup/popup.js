@@ -35,7 +35,7 @@ class VenaDownloaderPopupScript{
     createFileItem(file) {
         this.cookies[file.link] = file.cookies
 
-       
+        
         
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
