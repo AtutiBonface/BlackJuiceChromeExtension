@@ -1,6 +1,6 @@
 # VenaApp Video Interceptor Extension
 
-![VenaApp Logo](../images/xe-128.png)
+![VenaApp Logo](/images/xe-128.png)
 
 ## Overview
 
