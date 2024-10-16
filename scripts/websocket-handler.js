@@ -11,9 +11,11 @@ class WebSocketHandler {
         this.socket.onclose = onCloseCallback;
     }
 
-    sendData(data) {
+    sendData(data) {       
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify(data));
+        }else{
+            console.log(data)
         }
     }
 }

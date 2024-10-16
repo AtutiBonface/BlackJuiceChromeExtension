@@ -282,15 +282,20 @@ class MediaInterceptor {
                       "meta[property='og:image:secure_url']",
                       "meta[property='og:image']",
                       "link[rel='image_src']",
+                      "#poster img",
                       "meta[property='twitter:image']",
-                      "video[poster]"
+                      "video[poster]",
                   ];
   
                   for (const sel of selectors) {
                       const el = document.querySelector(sel);
                       if (el) {
                         let url = el.getAttribute("content") || el.getAttribute("href") || el.getAttribute("poster");
-  
+                        
+                        if (el.tagName.toLowerCase() === 'img') {
+                          url = el.getAttribute("src");
+                        }
+
                         if (url) {                        
                           return new URL(url, window.location.href).href;
                         }
@@ -324,6 +329,5 @@ class MediaInterceptor {
       });
   }
 }
-
 
 export default MediaInterceptor;

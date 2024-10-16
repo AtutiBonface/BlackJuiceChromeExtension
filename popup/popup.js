@@ -1,17 +1,21 @@
 class VenaDownloaderPopupScript{
     constructor(){
         this.fileList  = document.getElementById('fileList');
+        this.title = document.getElementById("title")
+        this.backBtn = document.getElementById("back")
         this.noOfSelectedItems = document.getElementById('no-of-selected-items');
         this.downloadBatch = document.querySelectorAll("#download-batch");
         this.windowBtn = document.getElementById('toggle-window-size');
         this.clearListBtn = document.getElementById('clear_list');
         this.container = document.getElementById('container');
         this.popupActionBtns = document.querySelectorAll(".toggle-disable");
-        this.deleteSelectedFilesVar = document.getElementById('delete-selected-files')
         this.downloadSelectedFilesVar = document.getElementById('download-selected-files')
+        this.togglesettingsBtn = document.getElementById("toggle-settings")
+        this.settingsPage = document.getElementById('settings-page')
         this.windowNormal = true;
         this.selectedFiles = [];
         this.cookies = {};
+        this.isSettingsPageOpen = false
 
 
         this.initialize()
@@ -28,8 +32,9 @@ class VenaDownloaderPopupScript{
         this.fileList.addEventListener('click', (e) => this.handleIndividualDownloadClick(e));
         this.windowBtn.addEventListener('click', () => this.toggleWindowSize());
         this.clearListBtn.addEventListener('click', () => this.clearVideoList());
-        this.deleteSelectedFilesVar.addEventListener('click', ()=> this.deleteSelectedFiles())
         this.downloadSelectedFilesVar.addEventListener('click', ()=> this.downloadSelectedFiles())
+        this.togglesettingsBtn.addEventListener("click", ()=> this.toggleSettingsPage())
+        this.backBtn.addEventListener('click', ()=> this.toggleSettingsPage())
     }
 
     createFileItem(file) {
@@ -40,13 +45,14 @@ class VenaDownloaderPopupScript{
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
         fileItem.innerHTML = `
+
             <div class="file-icon" style="background-image:url('${file.thumbnail}');">
                 <div class="favicon" style="background-image:url('${file.favicon}');"></div>                           
                
             </div>
             <div class="domain" data-domain='${file.link}'></div>
             <div class="file-info">
-                <div class="file-name">${file.name}</div>
+                <div class="file-name" title='${file.name}'>${file.name}</div>
 
                 <div>
                     <div class="more-on-file-wrapper">
@@ -70,8 +76,21 @@ class VenaDownloaderPopupScript{
                     <img src="/images/icons8-download-96.png" alt="">
                 </button>
             </div>
+            <button class="delete-btn">&times;</button>
         `;
         return fileItem;
+    }
+
+    toggleSettingsPage(){
+        this.title.textContent = !this.isSettingsPageOpen? 'VenaAddon Settings' : 'VenaAddon'   
+        this.backBtn.style.display = !this.isSettingsPageOpen? 'flex' : 'none'
+        this.fileList.style.display =  !this.isSettingsPageOpen? 'none' : 'block'
+        this.settingsPage.style.display = !this.isSettingsPageOpen? 'block' : 'none'
+
+        this.noOfSelectedItems.textContent = !this.isSettingsPageOpen? '' : '' 
+
+        this.isSettingsPageOpen =! this.isSettingsPageOpen
+
     }
 
     returnDropdownData(file){
@@ -203,25 +222,15 @@ class VenaDownloaderPopupScript{
         });
     }
 
-    deleteSelectedFiles() {
+    deleteSelectedFiles(fileItem, url) {        
         // Remove selected files from the UI
         let fileIDs = []
-        this.fileList.querySelectorAll('.file-item').forEach(fileItem => {
-            const checkbox = fileItem.querySelector('.custom-checkbox');
-            const url = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');
-            if (checkbox.checked) {
-                fileIDs.push(url)
-                fileItem.remove();
-            }
-        });  
-       
-        this.selectedFiles = [];    
-        
-        
+        fileIDs.push(url)
+        fileItem.remove();
+        this.selectedFiles = this.selectedFiles.filter(fileId => fileId !== url);        
         chrome.runtime.sendMessage({ action: 'deleteIndividualFile', ids : fileIDs })
-        this.updateDownloadButton();        
-
-        //then delete the file with url from chrome local storage + url       
+        this.updateDownloadButton();   
+        
     }
 
     downloadSelectedFiles() {
@@ -280,6 +289,7 @@ class VenaDownloaderPopupScript{
             }
             this.updateDownloadButton();
         }
+       
 
         
     }
@@ -296,8 +306,7 @@ class VenaDownloaderPopupScript{
                     No media available for processing in this tab. 
                     <br>
                     Please click play on the video to assist in detecting files...
-                </p>
-                    
+                </p>                    
             </div>`;
         this.noOfSelectedItems.textContent = ''
         chrome.runtime.sendMessage({ action: 'clearVideoList' });
@@ -327,10 +336,14 @@ class VenaDownloaderPopupScript{
             const fileName = fileItem.querySelector('.file-name').textContent;
             const filelink = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');    
             const domain = fileItem.querySelector('.domain').getAttribute('data-domain'); 
-
-            let cookie = this.cookies[domain]        
-
+            let cookie = this.cookies[domain]    
             chrome.runtime.sendMessage({action: 'initiateDownload', data: {count: 1, edit: false, files : [{link :filelink, name: fileName, cookies: cookie}]}});
+        }
+
+        else if (e.target.closest('.delete-btn')) {
+            const fileItem = e.target.closest('.file-item');
+            const url = fileItem.querySelector('.custom-checkbox').getAttribute('data-id');   
+            this.deleteSelectedFiles(fileItem, url) 
         }
     }
 

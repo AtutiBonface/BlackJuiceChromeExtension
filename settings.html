@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Styled Checkbox</title>
+  <style>
+    /* Hide the default checkbox */
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 20px;
+      height: 20px;
+      background-color: transparent;
+      cursor: pointer;
+      position: relative;
+    }
+
+    /* Add checkmark */
+    input[type="checkbox"]:checked {
+      background-color: transparent;
+      border-color: transparent;
+    }
+
+    /* Checkmark styling */
+    input[type="checkbox"]:checked::after {
+      content: '✔';
+      font-size: 16px;
+      color: green;
+      position: absolute;
+      top: 0px;
+      left: 3px;
+    }
+
+    
+  </style>
+</head>
+<body>
+
+  <label>
+    <input type="checkbox">
+    Check me!
+  </label>
+
+</body>
+</html>

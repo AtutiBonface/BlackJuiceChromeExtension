@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .file-widget {
+            width: 100%;
+            max-width: 300px;
+            height: 80px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            position: relative;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+        }
+
+        .file-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filename {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filesize {
+            font-size: 12px;
+            color: #777;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+    <title>File Widget</title>
+</head>
+<body>
+
+    <div class="file-widget">
+        <div class="file-details">
+            <div class="filename">Filename.txt</div>
+            <div class="filesize">10 MB</div>
+        </div>
+        <button class="delete-btn">&times;</button>
+    </div>
+
+</body>
+</html>

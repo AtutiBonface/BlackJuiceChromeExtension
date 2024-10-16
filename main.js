@@ -17,20 +17,22 @@ class BlackjuiceApp {
 
     initialize() {
         this.checkDownloaderActive();
+        this.startApp()
         this.browserInteraction.startContextMenus();
         this.listenOnMessages();
     }
-
+    broadcastStatus(status){
+        this.browserInteraction.isDownloaderActive = status
+    }
     checkDownloaderActive() {
         this.webSocketHandler.openConnection(
             () => {
                 this.isDownloaderActive = true;
-                this.startApp();
+                this.broadcastStatus(true)
             },
             (error) => {
+                this.broadcastStatus(false)
                 this.isDownloaderActive = false;
-                //this.fileManager.clearVideoList();
-                this.startApp();
             },
             () => this.checkDownloaderActive()
         );
@@ -38,13 +40,12 @@ class BlackjuiceApp {
 
     startApp() {
         chrome.action.setIcon({
-            path: this.isDownloaderActive ? "/images/xe-128.png" : "/images/w-xe-128.png"
+            path:  "/images/xe-128.png"
         });
-        if (this.isDownloaderActive) {
-            //this.fileManager.setBadgedefaultText();
-            this.mediaInterceptor.startInterception();
-            this.browserInteraction.takeOverBrowserDownloads();
-        }
+        
+        this.mediaInterceptor.startInterception();
+        this.browserInteraction.takeOverBrowserDownloads();
+       
     }
 
     listenOnMessages() {
@@ -55,7 +56,20 @@ class BlackjuiceApp {
                 if (this.isDownloaderActive){
                     this.webSocketHandler.sendData(message.data);
                 }else{
-                    sendResponse({active: false, status: 'failed to send'})
+                    sendResponse({active: false, status: 'failed to send' ,step: 'browser takes over'})
+                    let files = message.data['files']
+                    files.forEach(file => {
+                        chrome.downloads.download({
+                            url: file['link'],
+                            filename: file['name']
+                        }, (downloadId) => {
+                            if (chrome.runtime.lastError) {
+                              console.error("Download failed: ", chrome.runtime.lastError);
+                            } else {
+                              console.log("Download started, ID:", downloadId);
+                            }
+                        });                        
+                    });
                 }
             } else if (message.action === "deleteIndividualFile") {
                 this.fileManager.deleteFileFromStorage(message.ids);

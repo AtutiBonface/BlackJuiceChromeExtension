@@ -2,6 +2,7 @@ class BrowserInteraction {
     constructor(fileManager, webSocketHandler) {
         this.fileManager = fileManager;
         this.webSocketHandler = webSocketHandler;
+        this.isDownloaderActive = false;
     }
 
     startContextMenus() {
@@ -22,7 +23,20 @@ class BrowserInteraction {
 
     handleContextMenuClick(url) {
         const filename = this.getFilenameFromUrl(url);
-        this.webSocketHandler.sendData({ count: 1, edit: true, files: [{ link: url, name: filename }] });
+        if (this.isDownloaderActive === true){
+            this.webSocketHandler.sendData({ count: 1, edit: true, files: [{ link: url, name: filename }] });
+        }else{
+            chrome.downloads.download({
+                url: url,
+                filename: url.split('/').pop()
+            }, (downloadId) => {
+                if (chrome.runtime.lastError) {
+                  console.error("Download failed: ", chrome.runtime.lastError);
+                } else {
+                  console.log("Download started, ID:", downloadId);
+                }
+            });
+        }
     }
 
     getFilenameFromUrl(url) {
@@ -33,10 +47,13 @@ class BrowserInteraction {
     takeOverBrowserDownloads() {
         chrome.downloads.onCreated.addListener((downloadItem) => {
             const url = downloadItem.url;
-            if (!url.startsWith("blob:")) {
-                this.handleDownloadIntercept(url);
-                chrome.downloads.cancel(downloadItem.id);
+            if (this.isDownloaderActive === true){
+                if (!url.startsWith("blob:")) {
+                    this.handleDownloadIntercept(url);                
+                    chrome.downloads.cancel(downloadItem.id);
+                }
             }
+            
         });
     }
 

@@ -10,7 +10,8 @@
     <div class="container" id="container">
         <div class="header">   
             <img src="/images/xe-128.png" alt="">
-            <h1>VenaAddon<span id="no-of-selected-items"></span> </h1>
+            <h1 id="title">VenaAddon<span id="no-of-selected-items"></span> </h1>
+            <button class="back" id="back"><img src="/images/back.png" alt=""></button>
         </div>
         <div class="file-list" id="fileList">       
             <div class="no-media">
@@ -21,21 +22,79 @@
                 </p>
             </div>
         </div>
+         <!-- Settings here-->
+         <div class="addon-settings" id="settings-page">
+            <div class="setting">
+                <label for="version">Version:</label>
+                <input type="text" id="version" value="2.1.0" readonly>
+            </div>
+            
+            <div class="setting">
+                <label for="target">Target:</label>
+                <input type="text" id="target" value="google" readonly>
+            </div>
+            
+            <div class="setting">
+                <label for="locale">Language:</label>
+                <input type="text" id="locale" value="English" readonly>
+            </div>
+            
+            <div class="setting">
+                <!--<label for="companion-app">Companion App:</label>
+                <p for="app-available" style="display: flex;">VenaAddon installed<span> <code>Version 2.2.1</code></span></p>
+                <p for="app-unavailable" style="display: flex;">VenaAddon not installed!</span><p> 
+                -->
+                <button class="setting-button" id="companion-app">Install Companion App</button>
+                <button class="setting-button" id="recheck">Recheck</button>
+            </div>
+            
+            <div class="setting">
+                <label for="theme">Theme:</label>
+                <select id="theme">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System</option>
+                </select>
+            </div>
+            
+            <div class="setting">
+                <label for="download-directory">Download directory:</label>
+                <input type="text" id="download-directory" value="VenaApp">
+                <button class="setting-button" id="change-directory">Change</button>
+            </div>    
+            
+            
+            <div class="setting">
+                <label for="variant-preferences">Variant preferences:</label>
+                <input type="text" id="variant-preferences" value="Mp4">
+                <button class="setting-button" id="clear-preferences">Clear</button>
+            </div>
+            
+            <div class="setting check">
+                <label class="switch">
+                    <input type="checkbox" id="use-browser" checked>
+                </label>
+                <label for="use-browser">Use Browser to download:</label>
+            </div>
+            
+            <div class="setting check">
+                <label class="switch">
+                    <input type="checkbox" id="auto-hide" checked>
+                </label>
+                <label for="auto-hide">Automatically hide downloaded media:</label>
+            </div>
+            
+            <button class="setting-button" id="save-settings">Save Settings</button>
+        </div>
+
         <div class="bottom-bar">
             <div class="left">
-                <div class="tooltip-container">
-                    <button class="bottom-btn delete toggle-disable" id="delete-selected-files" disabled>
-                        <img src="/images/delete.png" alt="">
-                        <span class="badge none" id="download-batch"></span>
-                    </button>
-                    <div class="tooltip-text arrow-left">Delete Selected</div>
-                </div>
                 <div class="tooltip-container">
                     <button class="bottom-btn download toggle-disable" id="download-selected-files" disabled>
                         <img src="/images/download-black.png" alt="">
                         <span class="badge none" id="download-batch"></span>
                     </button>
-                    <div class="tooltip-text">Download Selected</div>
+                    <div class="tooltip-text  arrow-left">Download Selected</div>
                 </div>
             </div>
             <div class="right">
@@ -52,13 +111,14 @@
                     <div class="tooltip-text">Clear List</div>
                 </div>
                 <div class="tooltip-container">
-                    <button class="bottom-btn">
+                    <button class="bottom-btn" id="toggle-settings">
                         <img src="/images/settings.png" alt="">
                     </button>
-                    <div class="tooltip-text arrow-right">Settings</div>
+                    <div class="tooltip-text arrow-right" >Settings</div>
                 </div>
             </div>
         </div>
+   
     </div>
 
     <script src="/popup/popup.js"></script>
