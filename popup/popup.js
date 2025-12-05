@@ -24,7 +24,8 @@ class VenaDownloaderPopupScript{
        
         this.bindEvents();
         this.loadFileList();
-        this.setupDropdowns()
+        this.setupDropdowns();
+        this.setupStorageListener();
     }
 
     bindEvents() {
@@ -135,6 +136,20 @@ class VenaDownloaderPopupScript{
             })
             this.clearListBtn.disabled = false
             
+        } else {
+            // Show "no media" message when list is empty
+            this.fileList.innerHTML = `<div class="no-media">
+                <p>
+                    No media available for processing in this tab. 
+                    <br>
+                    Please click play on the video to assist in detecting files...
+                </p>                    
+            </div>`;
+            this.noOfSelectedItems.textContent = '';
+            this.popupActionBtns.forEach((button)=>{
+                button.disabled = true
+            })
+            this.clearListBtn.disabled = true
         }
     }
 
@@ -324,6 +339,18 @@ class VenaDownloaderPopupScript{
                 this.renderFileList(result.updateVideoList);
             } else {
                 console.log("No data");
+            }
+        });
+    }
+
+    setupStorageListener() {
+        // Listen for changes to chrome.storage
+        chrome.storage.onChanged.addListener((changes, areaName) => {
+            if (areaName === 'local' && changes.updateVideoList) {
+                const newFileList = changes.updateVideoList.newValue;
+                if (newFileList) {
+                    this.renderFileList(newFileList);
+                }
             }
         });
     }
